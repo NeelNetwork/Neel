@@ -12,14 +12,12 @@ services:
         - https_proxy
         - no_proxy
     image: market-dev-env
-    container_name: market-shell
+    container_name: neel-shell
     volumes:
-      - .:/project/sawtooth-marketplace
-      - /project/sawtooth-marketplace/sawbuck_app/node_modules
+      - .:/project/neel
     command: |
       bash -c "
-        market-protogen &&
-        cd sawbuck_app/ &&
+        neel-protogen &&
         npm run build &&
         cd ../ &&
         tail -f /dev/null
@@ -34,15 +32,15 @@ services:
         - https_proxy
         - no_proxy
     image: market-tp
-    container_name: market-processor
+    container_name: neel-processor
     volumes:
-      - '.:/project/sawtooth-marketplace'
+      - '.:/project/neel'
     depends_on:
-      - market-shell
+      - neel-shell
     command: |
       bash -c "
         sleep 1 &&
-        marketplace-tp -v \
+        neel-tp -v \
           -C tcp://validator:4004
       "
 
@@ -54,22 +52,22 @@ services:
         - http_proxy
         - https_proxy
         - no_proxy
-    image: market-rest-api
-    container_name: market-rest-api
+    image: neel-rest-api
+    container_name: neel-rest-api
     volumes:
-      - .:/project/sawtooth-marketplace
+      - .:/project/neel
     ports:
       - '8040:8000'
     depends_on:
-      - market-shell
-      - market-ledger-sync
+      - neel-shell
+      - neel-ledger-sync
       - rethink
       - validator
     command: |
       bash -c "
         sleep 3 &&
-        marketplace-rest-api \
-          --host market-rest-api \
+        neel-rest-api \
+          --host neel-rest-api \
           --db-host rethink \
           --validator tcp://validator:4004
       "
@@ -82,19 +80,19 @@ services:
         - http_proxy
         - https_proxy
         - no_proxy
-    image: market-ledger-sync
-    container_name: market-ledger-sync
+    image: neel-ledger-sync
+    container_name: neel-ledger-sync
     volumes:
-      - .:/project/sawtooth-marketplace
+      - .:/project/neel
     depends_on:
-      - market-shell
+      - neel-shell
       - rethink
       - validator
     command: |
       bash -c "
         sleep 1 &&
-        market-setup-db --host rethink &&
-        marketplace-ledger-sync -vv \
+        neel-setup-db --host rethink &&
+        neel-ledger-sync -vv \
           --db-host rethink \
           --validator tcp://validator:4004
       "
@@ -127,8 +125,8 @@ services:
     image: hyperledger/sawtooth-shell:1.0
     container_name: sawtooth-shell
     volumes:
-      - '.:/project/sawtooth-marketplace'
-    working_dir: /project/sawtooth-marketplace
+      - '.:/project/neel'
+    working_dir: /project/neel
     container_name: sawtooth-shell
     depends_on:
       - sawtooth-rest-api
